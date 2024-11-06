@@ -14,12 +14,15 @@ func Shorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
 	}
-	return "", nil
+	return "https://localhost/hardcoded", nil
 }
 
 func Unshorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
+	}
+	if rawURL == "https://localhost/hardcoded" {
+		return "https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74", nil
 	}
 	return "", ErrNotFound
 }

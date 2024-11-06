@@ -2,6 +2,7 @@ package url_shortener
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -45,4 +46,15 @@ func TestShorten_invalid_url_missing_scheme(t *testing.T) {
 	_, err := Shorten("toto.com")
 
 	assert.ErrorIs(t, err, ErrMissingScheme)
+}
+
+func TestShortenAndUnshorten_ok_first_example(t *testing.T) {
+	url := "https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74"
+	shortenedURL, err := Shorten(url)
+	require.NoError(t, err)
+
+	gotURL, err := Unshorten(shortenedURL)
+	require.NoError(t, err)
+
+	assert.Equal(t, url, gotURL)
 }
