@@ -10,27 +10,56 @@ var ErrNotFound = errors.New("URL not found")
 var ErrMissingHostname = errors.New("missing hostname")
 var ErrMissingScheme = errors.New("missing scheme")
 
-type Application struct{}
+type Application struct {
+	store *Store
+}
 
 func NewApplication() *Application {
-	return &Application{}
+	store := NewStore()
+	store.Save("https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74",
+		"https://localhost/hardcoded")
+	return &Application{store: store}
+}
+
+type Store struct {
+	data map[string]string
+}
+
+func NewStore() *Store {
+	return &Store{data: make(map[string]string)}
+}
+
+func (s *Store) Get(shortened string) (string, error) {
+	u, ok := s.data[shortened]
+	if !ok {
+		return "", ErrNotFound
+	}
+	return u, nil
+}
+
+func (s *Store) Save(url, shortened string) error {
+	s.data[shortened] = url
+	return nil
 }
 
 func (a *Application) Shorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
 	}
-	return "https://localhost/hardcoded", nil
+	s := "https://localhost/hardcoded"
+	err := a.store.Save(rawURL, s)
+	return s, err
 }
 
 func (a *Application) Unshorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
 	}
-	if rawURL == "https://localhost/hardcoded" {
-		return "https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74", nil
+	u, err := a.store.Get(rawURL)
+	if err != nil {
+		return "", ErrNotFound
 	}
-	return "", ErrNotFound
+	return u, nil
 }
 
 func validateURL(rawURL string) error {
