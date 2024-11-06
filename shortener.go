@@ -10,14 +10,20 @@ var ErrNotFound = errors.New("URL not found")
 var ErrMissingHostname = errors.New("missing hostname")
 var ErrMissingScheme = errors.New("missing scheme")
 
-func Shorten(rawURL string) (string, error) {
+type Application struct{}
+
+func NewApplication() *Application {
+	return &Application{}
+}
+
+func (a *Application) Shorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
 	}
 	return "https://localhost/hardcoded", nil
 }
 
-func Unshorten(rawURL string) (string, error) {
+func (a *Application) Unshorten(rawURL string) (string, error) {
 	if err := validateURL(rawURL); err != nil {
 		return "", err
 	}
