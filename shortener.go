@@ -8,14 +8,32 @@ import (
 
 var ErrNotFound = errors.New("URL not found")
 var ErrMissingHostname = errors.New("missing hostname")
+var ErrMissingScheme = errors.New("missing scheme")
+
+func Shorten(rawURL string) (string, error) {
+	if err := validateURL(rawURL); err != nil {
+		return "", err
+	}
+	return "", nil
+}
 
 func Unshorten(rawURL string) (string, error) {
-	u, err := url.Parse(rawURL)
-	if err != nil {
-		return "", fmt.Errorf("invalid URL: %w", err)
-	}
-	if u.Hostname() == "" {
-		return "", ErrMissingHostname
+	if err := validateURL(rawURL); err != nil {
+		return "", err
 	}
 	return "", ErrNotFound
+}
+
+func validateURL(rawURL string) error {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+	if u.Scheme == "" {
+		return ErrMissingScheme
+	}
+	if u.Hostname() == "" {
+		return ErrMissingHostname
+	}
+	return nil
 }
