@@ -66,3 +66,15 @@ func TestShortenAndUnshorten_ok_first_example(t *testing.T) {
 
 	assert.Equal(t, url, gotURL)
 }
+
+func TestShortenAndUnshorten_ok_random_path(t *testing.T) {
+	app := NewApplication()
+	url := "https://localhost/bla/bla/bla"
+	shortenedURL, err := app.Shorten(url)
+	require.NoError(t, err)
+
+	gotURL, err := app.Unshorten(shortenedURL)
+	require.NoError(t, err)
+
+	assert.Equal(t, url, gotURL)
+}
