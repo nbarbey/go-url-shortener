@@ -1,6 +1,7 @@
 package url_shortener
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"net/url"
@@ -10,10 +11,12 @@ type URL struct {
 	*url.URL
 }
 
+var ErrInvalidURL = errors.New("invalid URL")
+
 func NewURL(rawURL string) (URL, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
-		return URL{}, fmt.Errorf("invalid URL: %w", err)
+		return URL{}, ErrInvalidURL
 	}
 	return URL{URL: u}, nil
 }

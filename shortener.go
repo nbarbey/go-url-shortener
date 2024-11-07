@@ -21,7 +21,15 @@ type ShortenUnshortener interface {
 	Unshortener
 }
 
-func (a *Application) Shorten(rawURL string) (string, error) {
+type Usecase struct {
+	store Storer
+}
+
+func NewUsecase(store Storer) *Usecase {
+	return &Usecase{store: store}
+}
+
+func (c *Usecase) Shorten(rawURL string) (string, error) {
 	u, err := NewURL(rawURL)
 	if err != nil {
 		return "", err
@@ -30,11 +38,11 @@ func (a *Application) Shorten(rawURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = a.store.Save(rawURL, s.String())
+	err = c.store.Save(rawURL, s.String())
 	return s.String(), err
 }
 
-func (a *Application) Unshorten(rawURL string) (string, error) {
+func (c *Usecase) Unshorten(rawURL string) (string, error) {
 	u, err := NewURL(rawURL)
 	if err != nil {
 		return "", err
@@ -42,7 +50,7 @@ func (a *Application) Unshorten(rawURL string) (string, error) {
 	if err := u.Validate(); err != nil {
 		return "", err
 	}
-	got, err := a.store.Get(rawURL)
+	got, err := c.store.Get(rawURL)
 	if err != nil {
 		return "", ErrNotFound
 	}

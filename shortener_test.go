@@ -24,7 +24,7 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 		app := builder()
 		_, err := app.Unshorten("https:// ")
 
-		assert.ErrorContains(t, err, "invalid character")
+		assert.ErrorContains(t, err, "invalid URL")
 	})
 
 	t.Run("invalid_url_missing_hostname", func(t *testing.T) {
@@ -45,7 +45,7 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 		app := builder()
 		_, err := app.Shorten("https:// ")
 
-		assert.ErrorContains(t, err, "invalid character")
+		assert.ErrorContains(t, err, "invalid URL")
 	})
 
 	t.Run("invalid_url_missing_hostname", func(t *testing.T) {

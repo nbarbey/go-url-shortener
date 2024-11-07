@@ -1,12 +1,20 @@
 package url_shortener
 
 type Application struct {
-	store Storer
+	store  Storer
+	server *HTTPServer
+	*Usecase
+}
+
+func (a *Application) Start() error {
+	return a.server.Start()
 }
 
 func NewApplication() *Application {
-	store := NewStore()
-	store.Save("https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74",
-		"https://localhost/hardcoded")
-	return &Application{store: NewInMemorySqlite()}
+	store := NewInMemorySqlite()
+	usecase := NewUsecase(store)
+	return &Application{
+		store:   store,
+		Usecase: usecase,
+		server:  NewHTTPServer(usecase)}
 }
