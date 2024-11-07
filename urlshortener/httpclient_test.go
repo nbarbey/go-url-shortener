@@ -1,4 +1,4 @@
-package url_shortener
+package urlshortener
 
 import (
 	"github.com/go-resty/resty/v2"

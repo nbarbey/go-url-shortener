@@ -1,4 +1,4 @@
-package url_shortener
+package urlshortener
 
 import (
 	"errors"
@@ -19,8 +19,7 @@ func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
 }
 
 func (s *HTTPServer) Start() error {
-	go func() { _ = http.ListenAndServe("localhost:8080", s.mux) }()
-	return nil
+	return http.ListenAndServe("localhost:8080", s.mux)
 }
 
 type muxModifier func(mux *http.ServeMux) *http.ServeMux

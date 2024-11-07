@@ -1,0 +1,4 @@
+### shorten exemple
+GET http://localhost:8080/shorten?url=https%3A%2F%2Fmedium.com%2Fequify-tech%2Fthe-three-fundamental-stages-of-an-engineering-career-54dac732fc74
+
+###

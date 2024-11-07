@@ -1,4 +1,4 @@
-package url_shortener
+package urlshortener
 
 type Application struct {
 	store  Storer

@@ -1,4 +1,4 @@
-package url_shortener
+package urlshortener
 
 import "gorm.io/gorm"
 import "gorm.io/driver/sqlite"
