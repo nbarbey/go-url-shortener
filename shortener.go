@@ -8,6 +8,19 @@ var ErrNotFound = errors.New("URL not found")
 var ErrMissingHostname = errors.New("missing hostname")
 var ErrMissingScheme = errors.New("missing scheme")
 
+type Shortener interface {
+	Shorten(rawURL string) (string, error)
+}
+
+type Unshortener interface {
+	Unshorten(rawURL string) (string, error)
+}
+
+type ShortenUnshortener interface {
+	Shortener
+	Unshortener
+}
+
 func (a *Application) Shorten(rawURL string) (string, error) {
 	u, err := NewURL(rawURL)
 	if err != nil {
