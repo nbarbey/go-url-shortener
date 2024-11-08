@@ -46,6 +46,6 @@ func (u URL) Shorten() (URL, error) {
 	if err := u.Validate(); err != nil {
 		return URL{}, err
 	}
-	shortenedPath := fmt.Sprintf("unshorten/%s", u.encode())
-	return URL{URL: &url.URL{Scheme: "https", Host: "localhost", Path: shortenedPath}}, nil
+	shortenedPath := fmt.Sprintf("u/%s", u.encode())
+	return URL{URL: &url.URL{Scheme: "https", Host: "localhost:8080", Path: shortenedPath}}, nil
 }

@@ -1,8 +1,11 @@
 package urlshortener
 
 import (
+	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -68,7 +71,7 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 		shortenedURL, err := app.Shorten(url)
 		require.NoError(t, err)
 
-		assert.Equal(t, "https://localhost/unshorten/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
+		assert.Equal(t, "https://localhost/u/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
 
 		gotURL, err := app.Unshorten(shortenedURL)
 		require.NoError(t, err)
@@ -107,4 +110,22 @@ func shortenUnshorten(t *testing.T, app ShortenUnshortener, url string) string {
 	gotURL, err := app.Unshorten(shortenedURL)
 	require.NoError(t, err)
 	return gotURL
+}
+
+func TestHTTPUnshorten_with_redirect(t *testing.T) {
+	app := NewApplication()
+	testServer := httptest.NewServer(app.server.mux)
+	client := NewHTTPClientFromResty(resty.NewWithClient(testServer.Client()).
+		SetBaseURL(testServer.URL))
+
+	rawURL := "https://developer.hashicorp.com/vault/tutorials/get-started/understand-static-dynamic-secrets"
+	short, err := client.Shorten(rawURL)
+	require.NoError(t, err)
+
+	request := httptest.NewRequest("GET", short, nil)
+	recorder := httptest.NewRecorder()
+	app.server.mux.ServeHTTP(recorder, request)
+
+	assert.Equal(t, http.StatusTemporaryRedirect, recorder.Code)
+	assert.Equal(t, rawURL, recorder.Header().Get("Location"))
 }

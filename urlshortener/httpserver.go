@@ -15,6 +15,7 @@ func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
 	mux := http.NewServeMux()
 	mux = withShortenerHandler(s)(mux)
 	mux = withUnhortenerHandler(s)(mux)
+	mux = withURedirectHandler(s)(mux)
 	return &HTTPServer{mux: mux}
 }
 
@@ -76,6 +77,34 @@ func withUnhortenerHandler(u Unshortener) muxModifier {
 				_, _ = writer.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 			case err == nil:
 				_, _ = writer.Write([]byte(fmt.Sprintf(`{"unshortened": "%s"}`, shortened)))
+			default:
+				writer.WriteHeader(http.StatusInternalServerError)
+			}
+		})
+		return mux
+	}
+}
+
+func withURedirectHandler(u Unshortener) muxModifier {
+	return func(mux *http.ServeMux) *http.ServeMux {
+		mux.HandleFunc("/u/{path}", func(writer http.ResponseWriter, request *http.Request) {
+			path := request.PathValue("path")
+
+			rawURL := fmt.Sprintf("https://localhost/u/%s", path)
+			unshortened, err := u.Unshorten(rawURL)
+			switch {
+			case errors.Is(err, ErrNotFound):
+				fallthrough
+			case errors.Is(err, ErrMissingScheme):
+				fallthrough
+			case errors.Is(err, ErrMissingHostname):
+				fallthrough
+			case errors.Is(err, ErrInvalidURL):
+				writer.WriteHeader(http.StatusBadRequest)
+				_, _ = writer.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
+			case err == nil:
+				writer.Header().Set("Location", unshortened)
+				writer.WriteHeader(http.StatusTemporaryRedirect)
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
