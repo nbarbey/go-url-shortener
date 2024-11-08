@@ -1,6 +1,11 @@
 package urlshortener
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"os"
+)
 import "gorm.io/driver/sqlite"
 
 type Storer interface {
@@ -51,6 +56,17 @@ func (p PGStore) Save(url, shortened string) error {
 
 func NewInMemorySqlite() *PGStore {
 	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
+	}
+	_ = db.AutoMigrate(&URLAssociation{})
+	return &PGStore{db: db}
+}
+
+func NewPG() *PGStore {
+	dsn := fmt.Sprintf("host=localhost dbname=url port=9920 user=%s password=%s",
+		os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"))
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}

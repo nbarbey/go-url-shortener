@@ -12,14 +12,14 @@ import (
 
 func TestHTTPShortenUnshortener(t *testing.T) {
 	ShortenUnshortenerFromBuilder(t, func() ShortenUnshortener {
-		app := NewApplication()
+		app := NewInMemoryApplication()
 		testServer := httptest.NewServer(app.server.mux)
 		return NewHTTPClientFromResty(resty.NewWithClient(testServer.Client()).
 			SetBaseURL(testServer.URL))
 	})
 
 	t.Run("URL not found", func(t *testing.T) {
-		app := NewApplication()
+		app := NewInMemoryApplication()
 		request := httptest.NewRequest(http.MethodGet, "/unshorten?url=https%3A%2F%2Flocalhost%2Fabcd1234", nil)
 		recorder := httptest.NewRecorder()
 
@@ -32,7 +32,7 @@ func TestHTTPShortenUnshortener(t *testing.T) {
 		assert.Equal(t, `{"error": "URL not found"}`, string(data))
 	})
 	t.Run("missing hostname", func(t *testing.T) {
-		app := NewApplication()
+		app := NewInMemoryApplication()
 		request := httptest.NewRequest(http.MethodGet, "/unshorten?url=https%3A//", nil)
 		recorder := httptest.NewRecorder()
 

@@ -11,7 +11,7 @@ import (
 
 func TestApplicationShortenUnshortener(t *testing.T) {
 	ShortenUnshortenerFromBuilder(t, func() ShortenUnshortener {
-		return NewApplication()
+		return NewInMemoryApplication()
 	})
 }
 
@@ -113,7 +113,7 @@ func shortenUnshorten(t *testing.T, app ShortenUnshortener, url string) string {
 }
 
 func TestHTTPUnshorten_with_redirect(t *testing.T) {
-	app := NewApplication()
+	app := NewInMemoryApplication()
 	testServer := httptest.NewServer(app.server.mux)
 	client := NewHTTPClientFromResty(resty.NewWithClient(testServer.Client()).
 		SetBaseURL(testServer.URL))

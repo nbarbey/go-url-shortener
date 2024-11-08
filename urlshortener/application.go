@@ -10,8 +10,17 @@ func (a *Application) Start() error {
 	return a.server.Start()
 }
 
-func NewApplication() *Application {
+func NewInMemoryApplication() *Application {
 	store := NewInMemorySqlite()
+	usecase := NewUsecase(store)
+	return &Application{
+		store:   store,
+		Usecase: usecase,
+		server:  NewHTTPServer(usecase)}
+}
+
+func NewPGpplication() *Application {
+	store := NewPG()
 	usecase := NewUsecase(store)
 	return &Application{
 		store:   store,
