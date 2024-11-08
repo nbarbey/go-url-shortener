@@ -71,7 +71,7 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 		shortenedURL, err := app.Shorten(url)
 		require.NoError(t, err)
 
-		assert.Equal(t, "https://localhost/u/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
+		assert.Equal(t, "https://localhost:8080/u/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
 
 		gotURL, err := app.Unshorten(shortenedURL)
 		require.NoError(t, err)
@@ -121,6 +121,8 @@ func TestHTTPUnshorten_with_redirect(t *testing.T) {
 	rawURL := "https://developer.hashicorp.com/vault/tutorials/get-started/understand-static-dynamic-secrets"
 	short, err := client.Shorten(rawURL)
 	require.NoError(t, err)
+
+	assert.Equal(t, "https://localhost:8080/u/6Hgh0HxUDE0TQs8NYZDHtP", short)
 
 	request := httptest.NewRequest("GET", short, nil)
 	recorder := httptest.NewRecorder()

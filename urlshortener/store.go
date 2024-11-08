@@ -35,12 +35,12 @@ type PGStore struct {
 
 type URLAssociation struct {
 	URL       string
-	Shortened string `gorm:"primarykey"`
+	Shortened string `gorm:"primaryKey"`
 }
 
 func (p PGStore) Get(shortened string) (string, error) {
 	var association = URLAssociation{}
-	tx := p.db.Model(&URLAssociation{Shortened: shortened}).First(&association)
+	tx := p.db.First(&association, "shortened = ?", shortened)
 	return association.URL, tx.Error
 }
 

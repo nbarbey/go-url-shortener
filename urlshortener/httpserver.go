@@ -90,7 +90,7 @@ func withURedirectHandler(u Unshortener) muxModifier {
 		mux.HandleFunc("/u/{path}", func(writer http.ResponseWriter, request *http.Request) {
 			path := request.PathValue("path")
 
-			rawURL := fmt.Sprintf("https://localhost/u/%s", path)
+			rawURL := fmt.Sprintf("https://localhost:8080/u/%s", path)
 			unshortened, err := u.Unshorten(rawURL)
 			switch {
 			case errors.Is(err, ErrNotFound):
