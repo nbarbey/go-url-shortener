@@ -68,6 +68,8 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 		shortenedURL, err := app.Shorten(url)
 		require.NoError(t, err)
 
+		assert.Equal(t, "https://localhost/unshorten/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
+
 		gotURL, err := app.Unshorten(shortenedURL)
 		require.NoError(t, err)
 

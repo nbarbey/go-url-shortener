@@ -1,6 +1,7 @@
 package urlshortener
 
 import (
+	"crypto/md5"
 	"errors"
 	"fmt"
 	"math/big"
@@ -31,11 +32,13 @@ func (u URL) Validate() error {
 	return nil
 }
 
-// base62 encoding from https://ucarion.com/go-base62
 func (u URL) encode() string {
-	var i big.Int
 	payload := fmt.Sprintf("%s://%s/%s", u.Scheme, u.Host, u.Path)
-	i.SetBytes([]byte(payload[:]))
+	m := md5.Sum([]byte(payload))
+
+	// base62 encoding from https://ucarion.com/go-base62
+	var i big.Int
+	i.SetBytes(m[:])
 	return i.Text(62)
 }
 
@@ -43,6 +46,6 @@ func (u URL) Shorten() (URL, error) {
 	if err := u.Validate(); err != nil {
 		return URL{}, err
 	}
-	shortenedPath := u.encode()
+	shortenedPath := fmt.Sprintf("unshorten/%s", u.encode())
 	return URL{URL: &url.URL{Scheme: "https", Host: "localhost", Path: shortenedPath}}, nil
 }
