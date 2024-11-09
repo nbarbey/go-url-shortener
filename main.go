@@ -1,7 +1,16 @@
 package main
 
-import "nbarbey.fr/url-shortener/urlshortener"
+import (
+	"nbarbey.fr/url-shortener/urlshortener"
+	"os"
+)
 
 func main() {
-	_ = urlshortener.NewPGpplication().Start()
+	var app *urlshortener.Application
+	if os.Getenv("DB_TYPE") == "memory" {
+		app = urlshortener.NewInMemoryApplication()
+	} else {
+		app = urlshortener.NewPGpplication()
+	}
+	_ = app.Start()
 }

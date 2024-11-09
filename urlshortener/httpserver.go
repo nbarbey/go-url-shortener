@@ -3,6 +3,7 @@ package urlshortener
 import (
 	"errors"
 	"fmt"
+	"github.com/MadAppGang/httplog"
 	"net/http"
 	"net/url"
 )
@@ -16,6 +17,7 @@ func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
 	mux = withShortenerHandler(s)(mux)
 	mux = withUnhortenerHandler(s)(mux)
 	mux = withURedirectHandler(s)(mux)
+
 	return &HTTPServer{mux: mux}
 }
 
@@ -27,7 +29,7 @@ type muxModifier func(mux *http.ServeMux) *http.ServeMux
 
 func withShortenerHandler(s Shortener) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.HandleFunc("/shorten", func(writer http.ResponseWriter, request *http.Request) {
+		mux.Handle("/shorten", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			escapedURL := request.URL.Query().Get("url")
 			rawURL, err := url.QueryUnescape(escapedURL)
 			if err != nil {
@@ -50,14 +52,14 @@ func withShortenerHandler(s Shortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})
+		})))
 		return mux
 	}
 }
 
 func withUnhortenerHandler(u Unshortener) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.HandleFunc("/unshorten", func(writer http.ResponseWriter, request *http.Request) {
+		mux.Handle("/unshorten", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			escapedURL := request.URL.Query().Get("url")
 			rawURL, err := url.QueryUnescape(escapedURL)
 			if err != nil {
@@ -80,17 +82,17 @@ func withUnhortenerHandler(u Unshortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})
+		})))
 		return mux
 	}
 }
 
 func withURedirectHandler(u Unshortener) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.HandleFunc("/u/{path}", func(writer http.ResponseWriter, request *http.Request) {
+		mux.Handle("/u/{path}", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			path := request.PathValue("path")
 
-			rawURL := fmt.Sprintf("https://localhost:8080/u/%s", path)
+			rawURL := fmt.Sprintf("https://0.0.0.0:8080/u/%s", path)
 			unshortened, err := u.Unshorten(rawURL)
 			switch {
 			case errors.Is(err, ErrNotFound):
@@ -108,7 +110,7 @@ func withURedirectHandler(u Unshortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})
+		})))
 		return mux
 	}
 }

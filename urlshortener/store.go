@@ -64,8 +64,8 @@ func NewInMemorySqlite() *PGStore {
 }
 
 func NewPG() *PGStore {
-	dsn := fmt.Sprintf("host=localhost dbname=url port=9920 user=%s password=%s",
-		os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"))
+	dsn := fmt.Sprintf("host=%s dbname=%s port=5432 user=%s password=%s",
+		os.Getenv("DB_HOST"), os.Getenv("DB_NAME"), os.Getenv("DB_USERNAME"), os.Getenv("DB_PASSWORD"))
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
