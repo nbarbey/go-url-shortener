@@ -14,10 +14,9 @@ type HTTPServer struct {
 
 func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
 	mux := http.NewServeMux()
-	mux = withShortenerHandler(s)(mux)
+	mux = withShortenerHandler(s, newRateLimiterMiddleware(), middlewareFunc(httplog.Logger))(mux)
 	mux = withUnhortenerHandler(s)(mux)
 	mux = withURedirectHandler(s)(mux)
-
 	return &HTTPServer{mux: mux}
 }
 
@@ -27,9 +26,10 @@ func (s *HTTPServer) Start() error {
 
 type muxModifier func(mux *http.ServeMux) *http.ServeMux
 
-func withShortenerHandler(s Shortener) muxModifier {
+func withShortenerHandler(s Shortener, mws ...middleware) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.Handle("/shorten", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		var handler http.Handler
+		handler = http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			escapedURL := request.URL.Query().Get("url")
 			rawURL, err := url.QueryUnescape(escapedURL)
 			if err != nil {
@@ -52,14 +52,16 @@ func withShortenerHandler(s Shortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})))
+		})
+
+		mux.Handle("/shorten", middlewares(mws).Handler(handler))
 		return mux
 	}
 }
 
-func withUnhortenerHandler(u Unshortener) muxModifier {
+func withUnhortenerHandler(u Unshortener, mws ...middleware) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.Handle("/unshorten", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			escapedURL := request.URL.Query().Get("url")
 			rawURL, err := url.QueryUnescape(escapedURL)
 			if err != nil {
@@ -82,14 +84,16 @@ func withUnhortenerHandler(u Unshortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})))
+		})
+
+		mux.Handle("/unshorten", middlewares(mws).Handler(handler))
 		return mux
 	}
 }
 
-func withURedirectHandler(u Unshortener) muxModifier {
+func withURedirectHandler(u Unshortener, mws ...middleware) muxModifier {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.Handle("/u/{path}", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			path := request.PathValue("path")
 
 			rawURL := fmt.Sprintf("https://localhost:8080/u/%s", path)
@@ -110,7 +114,8 @@ func withURedirectHandler(u Unshortener) muxModifier {
 			default:
 				writer.WriteHeader(http.StatusInternalServerError)
 			}
-		})))
+		})
+		mux.Handle("/u/{path}", middlewares(mws).Handler(handler))
 		return mux
 	}
 }
