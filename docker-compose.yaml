@@ -31,6 +31,8 @@ services:
       - database_postgres:/var/lib/postgresql/data
     networks:
       - url-shortener
+    #network_mode: "host"
+
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
       interval: 10s

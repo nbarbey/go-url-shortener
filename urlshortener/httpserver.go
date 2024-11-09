@@ -22,7 +22,7 @@ func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
 }
 
 func (s *HTTPServer) Start() error {
-	return http.ListenAndServe("localhost:8080", s.mux)
+	return http.ListenAndServe(":8080", s.mux)
 }
 
 type muxModifier func(mux *http.ServeMux) *http.ServeMux
@@ -92,7 +92,7 @@ func withURedirectHandler(u Unshortener) muxModifier {
 		mux.Handle("/u/{path}", httplog.Logger(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			path := request.PathValue("path")
 
-			rawURL := fmt.Sprintf("https://0.0.0.0:8080/u/%s", path)
+			rawURL := fmt.Sprintf("https://localhost:8080/u/%s", path)
 			unshortened, err := u.Unshorten(rawURL)
 			switch {
 			case errors.Is(err, ErrNotFound):
