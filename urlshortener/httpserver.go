@@ -12,12 +12,29 @@ type HTTPServer struct {
 	mux *http.ServeMux
 }
 
-func NewHTTPServer(s ShortenUnshortener) *HTTPServer {
+func NewHTTPServer(s ShortenUnshortener, c CountStorer) *HTTPServer {
 	mux := http.NewServeMux()
 	mux = withShortenerHandler(s, newRateLimiterMiddleware(), middlewareFunc(httplog.Logger))(mux)
 	mux = withUnhortenerHandler(s)(mux)
+	mux = withCount(c)(mux)
 	mux = withURedirectHandler(s)(mux)
 	return &HTTPServer{mux: mux}
+}
+
+func withCount(c CountStorer) func(mux *http.ServeMux) *http.ServeMux {
+	return func(mux *http.ServeMux) *http.ServeMux {
+		mux.Handle("/count", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			escapedURL := request.URL.Query().Get("url")
+			rawURL, err := url.QueryUnescape(escapedURL)
+			if err != nil {
+				writer.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			count, _ := c.Get(rawURL)
+			writer.Write([]byte(fmt.Sprintf(`{"count": %d}`, count)))
+		}))
+		return mux
+	}
 }
 
 func (s *HTTPServer) Start() error {

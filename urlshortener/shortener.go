@@ -56,3 +56,17 @@ func (c *Usecase) Unshorten(rawURL string) (string, error) {
 	}
 	return got, nil
 }
+
+type CountingUsecase struct {
+	*Usecase
+	countStore CountStorer
+}
+
+func (c *CountingUsecase) Unshorten(rawURL string) (string, error) {
+	got, err := c.Usecase.Unshorten(rawURL)
+	if err == nil {
+		_ = c.countStore.Increment(rawURL)
+	}
+
+	return got, err
+}
