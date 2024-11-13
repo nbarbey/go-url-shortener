@@ -1,7 +1,6 @@
 package urlshortener
 
 type Application struct {
-	store  Storer
 	server *HTTPServer
 	*CountingUsecase
 }
@@ -11,21 +10,17 @@ func (a *Application) Start() error {
 }
 
 func NewInMemoryApplication() *Application {
-	store := NewInMemorySqlite()
-	countStore := NewInMemoryCountStore()
-	usecase := &CountingUsecase{Usecase: NewUsecase(store), countStore: countStore}
-	return &Application{
-		store:           store,
-		CountingUsecase: usecase,
-		server:          NewHTTPServer(usecase, countStore)}
+	return NewApplicationFromInfrastructure(NewInMemoryInfrastructure())
 }
 
 func NewPGpplication() *Application {
-	store := NewPG()
-	countStore := NewPGCountStore()
-	usecase := &CountingUsecase{Usecase: NewUsecase(store), countStore: countStore}
+	return NewApplicationFromInfrastructure(NewPGInfrastructure())
+}
+
+func NewApplicationFromInfrastructure(i *InfraStructure) *Application {
+	useCases := NewCountingUsecase(i.store, i.countStore)
 	return &Application{
-		store:           store,
-		CountingUsecase: usecase,
-		server:          NewHTTPServer(usecase, countStore)}
+		CountingUsecase: useCases,
+		server:          NewHTTPServer(useCases, i.countStore),
+	}
 }

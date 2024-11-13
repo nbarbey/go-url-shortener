@@ -62,6 +62,10 @@ type CountingUsecase struct {
 	countStore CountStorer
 }
 
+func NewCountingUsecase(store Storer, countStore CountStorer) *CountingUsecase {
+	return &CountingUsecase{Usecase: NewUsecase(store), countStore: countStore}
+}
+
 func (c *CountingUsecase) Unshorten(rawURL string) (string, error) {
 	got, err := c.Usecase.Unshorten(rawURL)
 	if err == nil {
