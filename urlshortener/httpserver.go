@@ -3,9 +3,11 @@ package urlshortener
 import (
 	"errors"
 	"fmt"
-	"github.com/MadAppGang/httplog"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/MadAppGang/httplog"
 )
 
 type HTTPServer struct {
@@ -54,7 +56,22 @@ func withShortenerHandler(s Shortener, mws ...middleware) muxModifier {
 				writer.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			shortened, err := s.Shorten(rawURL)
+			var expiration *time.Time
+			escapedExpiration := request.URL.Query().Get("expiration")
+			if escapedExpiration != "" {
+				expirationString, err := url.QueryUnescape(escapedExpiration)
+				if err != nil {
+					writer.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				e, err := time.Parse("2006-01-02_15:04:05", expirationString)
+				if err != nil {
+					writer.WriteHeader(http.StatusBadRequest)
+					return
+				}
+				expiration = &e
+			}
+			shortened, err := s.Shorten(rawURL, expiration)
 			switch {
 			case err == nil:
 				_, _ = writer.Write([]byte(fmt.Sprintf(`{"shortened": "%s"}`, shortened)))
@@ -95,6 +112,8 @@ func withUnhortenerHandler(u Unshortener, mws ...middleware) muxModifier {
 			case errors.Is(err, ErrMissingHostname):
 				fallthrough
 			case errors.Is(err, ErrInvalidURL):
+				fallthrough
+			case errors.Is(err, ErrExpired):
 				writer.WriteHeader(http.StatusBadRequest)
 				_, _ = writer.Write([]byte(fmt.Sprintf(`{"error": "%s"}`, err.Error())))
 			case err == nil:

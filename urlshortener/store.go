@@ -1,16 +1,19 @@
 package urlshortener
 
 import (
+	"database/sql"
 	"fmt"
+	"os"
+	"time"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"os"
 )
 import "gorm.io/driver/sqlite"
 
 type Storer interface {
-	Get(shortened string) (string, error)
-	Save(url, shortened string) error
+	Get(shortened string) (URL, error)
+	Save(url, shortened string, expiration *time.Time) error
 }
 
 type InMemoryStore struct {
@@ -21,12 +24,12 @@ func NewStore() *InMemoryStore {
 	return &InMemoryStore{data: make(map[string]string)}
 }
 
-func (s *InMemoryStore) Get(shortened string) (string, error) {
+func (s *InMemoryStore) Get(shortened string) (URL, error) {
 	u, ok := s.data[shortened]
 	if !ok {
-		return "", ErrNotFound
+		return URL{}, ErrNotFound
 	}
-	return u, nil
+	return NewURL(u, nil)
 }
 
 func (s *InMemoryStore) Save(url, shortened string) error {
@@ -39,18 +42,32 @@ type PGStore struct {
 }
 
 type URLAssociation struct {
-	URL       string
-	Shortened string `gorm:"primaryKey"`
+	URL        string
+	Shortened  string `gorm:"primaryKey"`
+	Expiration sql.NullTime
 }
 
-func (p PGStore) Get(shortened string) (string, error) {
+func (p PGStore) Get(shortened string) (URL, error) {
 	var association = URLAssociation{}
 	tx := p.db.First(&association, "shortened = ?", shortened)
-	return association.URL, tx.Error
+	if tx.Error != nil {
+		return URL{}, tx.Error
+	}
+	if association.Expiration.Valid {
+		return NewURL(association.URL, &association.Expiration.Time)
+	}
+	return NewURL(association.URL, nil)
 }
 
-func (p PGStore) Save(url, shortened string) error {
-	tx := p.db.Create(&URLAssociation{URL: url, Shortened: shortened})
+func (p PGStore) Save(url, shortened string, expiration *time.Time) error {
+	var t sql.NullTime
+	if expiration == nil {
+		t.Valid = false
+	} else {
+		t.Valid = true
+		t.Time = *expiration
+	}
+	tx := p.db.Create(&URLAssociation{URL: url, Shortened: shortened, Expiration: t})
 	return tx.Error
 }
 

@@ -6,20 +6,22 @@ import (
 	"fmt"
 	"math/big"
 	"net/url"
+	"time"
 )
 
 type URL struct {
 	*url.URL
+	expiration *time.Time
 }
 
 var ErrInvalidURL = errors.New("invalid URL")
 
-func NewURL(rawURL string) (URL, error) {
+func NewURL(rawURL string, expiration *time.Time) (URL, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return URL{}, ErrInvalidURL
 	}
-	return URL{URL: u}, nil
+	return URL{URL: u, expiration: expiration}, nil
 }
 
 func (u URL) Validate() error {
@@ -47,5 +49,5 @@ func (u URL) Shorten() (URL, error) {
 		return URL{}, err
 	}
 	shortenedPath := fmt.Sprintf("u/%s", u.encode())
-	return URL{URL: &url.URL{Scheme: "https", Host: "localhost:8080", Path: shortenedPath}}, nil
+	return URL{URL: &url.URL{Scheme: "https", Host: "localhost:8080", Path: shortenedPath}, expiration: u.expiration}, nil
 }

@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty/v2"
 	"net/http"
 	"net/url"
+	"time"
+
+	"github.com/go-resty/resty/v2"
 )
 
 type HTTPClient struct {
@@ -17,10 +19,13 @@ type shortenResponse struct {
 	Shortened string `json:"shortened"`
 }
 
-func (c HTTPClient) Shorten(rawURL string) (string, error) {
-	httpResponse, err := c.client.R().
-		SetQueryParam("url", url.QueryEscape(rawURL)).
-		Post("/shorten")
+func (c HTTPClient) Shorten(rawURL string, expiration *time.Time) (string, error) {
+	request := c.client.R().
+		SetQueryParam("url", url.QueryEscape(rawURL))
+	if expiration != nil {
+		request.SetQueryParam("expiration", url.QueryEscape(expiration.Format("2006-01-02_15:04:05")))
+	}
+	httpResponse, err := request.Post("/shorten")
 	if err != nil {
 		return "", err
 	}
@@ -89,6 +94,8 @@ func errorFromBody(body []byte) error {
 		return ErrMissingHostname
 	case ErrInvalidURL.Error():
 		return ErrInvalidURL
+	case ErrExpired.Error():
+		return ErrExpired
 	default:
 		panic(fmt.Sprintf("unexpected error: %s", e.Error))
 	}

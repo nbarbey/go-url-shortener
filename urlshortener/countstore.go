@@ -3,10 +3,11 @@ package urlshortener
 import (
 	"errors"
 	"fmt"
+	"os"
+
 	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"os"
 )
 
 type CountStorer interface {

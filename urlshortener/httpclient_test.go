@@ -1,13 +1,16 @@
 package urlshortener
 
 import (
-	"github.com/go-resty/resty/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/jonboulle/clockwork"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHTTPShortenUnshortener(t *testing.T) {
@@ -44,4 +47,24 @@ func TestHTTPShortenUnshortener(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, result.StatusCode)
 		assert.Equal(t, `{"error": "missing hostname"}`, string(data))
 	})
+}
+
+func TestHTTPShortenWithExpiration(t *testing.T) {
+	app := NewInMemoryApplication()
+	testServer := httptest.NewServer(app.server.mux)
+	client := NewHTTPClientFromResty(resty.NewWithClient(testServer.Client()).
+		SetBaseURL(testServer.URL))
+	clock := clockwork.NewFakeClock()
+	app.WithClock(clock)
+
+	expirationTime := time.Now().Add(1 * time.Hour)
+	short, err := client.Shorten("https://developer.hashicorp.com/vault/tutorials/get-started/understand-static-dynamic-secrets", &expirationTime)
+	require.NoError(t, err)
+
+	_, err = client.Unshorten(short)
+	require.NoError(t, err)
+
+	clock.Advance(2 * time.Hour)
+	_, err = client.Unshorten(short)
+	require.ErrorIs(t, err, ErrExpired)
 }

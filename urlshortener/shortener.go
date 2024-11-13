@@ -2,14 +2,18 @@ package urlshortener
 
 import (
 	"errors"
+	"time"
+
+	"github.com/jonboulle/clockwork"
 )
 
 var ErrNotFound = errors.New("URL not found")
 var ErrMissingHostname = errors.New("missing hostname")
 var ErrMissingScheme = errors.New("missing scheme")
+var ErrExpired = errors.New("URL expired")
 
 type Shortener interface {
-	Shorten(rawURL string) (string, error)
+	Shorten(rawURL string, expiration *time.Time) (string, error)
 }
 
 type Unshortener interface {
@@ -23,14 +27,22 @@ type ShortenUnshortener interface {
 
 type Usecase struct {
 	store Storer
+	clock clockwork.Clock
 }
 
 func NewUsecase(store Storer) *Usecase {
-	return &Usecase{store: store}
+	return &Usecase{
+		store: store,
+		clock: clockwork.NewRealClock(),
+	}
 }
 
-func (c *Usecase) Shorten(rawURL string) (string, error) {
-	u, err := NewURL(rawURL)
+func (u *Usecase) WithClock(clock clockwork.Clock) {
+	u.clock = clock
+}
+
+func (c *Usecase) Shorten(rawURL string, expiration *time.Time) (string, error) {
+	u, err := NewURL(rawURL, expiration)
 	if err != nil {
 		return "", err
 	}
@@ -38,12 +50,12 @@ func (c *Usecase) Shorten(rawURL string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	err = c.store.Save(rawURL, s.String())
+	err = c.store.Save(rawURL, s.String(), expiration)
 	return s.String(), err
 }
 
 func (c *Usecase) Unshorten(rawURL string) (string, error) {
-	u, err := NewURL(rawURL)
+	u, err := NewURL(rawURL, nil)
 	if err != nil {
 		return "", err
 	}
@@ -54,7 +66,10 @@ func (c *Usecase) Unshorten(rawURL string) (string, error) {
 	if err != nil {
 		return "", ErrNotFound
 	}
-	return got, nil
+	if got.expiration != nil && got.expiration.Before(c.clock.Now()) {
+		return "", ErrExpired
+	}
+	return got.String(), nil
 }
 
 type CountingUsecase struct {

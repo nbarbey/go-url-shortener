@@ -1,11 +1,12 @@
 package urlshortener
 
 import (
+	"net/http"
+	"time"
+
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/middleware/stdlib"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
-	"net/http"
-	"time"
 )
 
 type middleware interface {
