@@ -24,9 +24,9 @@ func NewHTTPServer(s ShortenUnshortener, c CountStorer) *HTTPServer {
 	return &HTTPServer{mux: mux}
 }
 
-func withCount(c CountStorer) func(mux *http.ServeMux) *http.ServeMux {
+func withCount(c CountStorer, mws ...middleware) func(mux *http.ServeMux) *http.ServeMux {
 	return func(mux *http.ServeMux) *http.ServeMux {
-		mux.Handle("/count", http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		handler := http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			escapedURL := request.URL.Query().Get("url")
 			rawURL, err := url.QueryUnescape(escapedURL)
 			if err != nil {
@@ -35,7 +35,8 @@ func withCount(c CountStorer) func(mux *http.ServeMux) *http.ServeMux {
 			}
 			count, _ := c.Get(rawURL)
 			writer.Write([]byte(fmt.Sprintf(`{"count": %d}`, count)))
-		}))
+		})
+		mux.Handle("/count", middlewares(mws).Handler(handler))
 		return mux
 	}
 }
