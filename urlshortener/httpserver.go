@@ -14,10 +14,11 @@ type HTTPServer struct {
 
 func NewHTTPServer(s ShortenUnshortener, c CountStorer) *HTTPServer {
 	mux := http.NewServeMux()
-	mux = withShortenerHandler(s, newRateLimiterMiddleware(), middlewareFunc(httplog.Logger))(mux)
-	mux = withUnhortenerHandler(s)(mux)
+	mws := []middleware{newRateLimiterMiddleware(), middlewareFunc(httplog.Logger)}
+	mux = withShortenerHandler(s, mws...)(mux)
+	mux = withUnhortenerHandler(s, mws...)(mux)
 	mux = withCount(c)(mux)
-	mux = withURedirectHandler(s)(mux)
+	mux = withURedirectHandler(s, mws...)(mux)
 	return &HTTPServer{mux: mux}
 }
 
