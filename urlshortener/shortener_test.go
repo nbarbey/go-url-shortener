@@ -72,16 +72,16 @@ func ShortenUnshortenerFromBuilder(t *testing.T, builder func() ShortenUnshorten
 
 	t.Run("ok_first_example", func(t *testing.T) {
 		app := builder()
-		url := "https://medium.com/equify-tech/the-three-fundamental-stages-of-an-engineering-career-54dac732fc74"
-		shortenedURL, err := app.Shorten(url, nil)
+		u := "https://medium.com/leboncoin-tech-blog/seriously-you-should-be-having-fun-writing-software-at-work-fa92c7cd008c"
+		shortenedURL, err := app.Shorten(u, nil)
 		require.NoError(t, err)
 
-		assert.Equal(t, "https://localhost:8080/u/1oPzkR9KEQU5LZniKkpIub", shortenedURL)
+		assert.Equal(t, "https://localhost:8080/u/6lHWylUzE7YYSRslbslMap", shortenedURL)
 
 		gotURL, err := app.Unshorten(shortenedURL)
 		require.NoError(t, err)
 
-		assert.Equal(t, url, gotURL)
+		assert.Equal(t, u, gotURL)
 	})
 
 	t.Run("ok_random_path", func(t *testing.T) {
