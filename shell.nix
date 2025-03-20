@@ -8,5 +8,6 @@ pkgs.mkShell {
     pkgs.go
     pkgs.delve
     pkgs.gcc
+    pkgs.k3s
   ];
 }
