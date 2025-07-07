@@ -2,6 +2,7 @@ package urlshortener
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jonboulle/clockwork"
@@ -67,8 +68,13 @@ func (c *Usecase) Unshorten(rawURL string) (string, error) {
 		return "", ErrNotFound
 	}
 	now := c.clock.Now()
-	if got.expiration != nil && got.expiration.Before(now) {
-		return "", ErrExpired
+	if got.expiration != nil {
+		if got.expiration.Before(now) {
+			fmt.Printf("expiration is `%s` which is before now `%s`", got.expiration, now)
+			return "", ErrExpired
+		} else {
+			fmt.Printf("expiration is `%s` which is after now `%s`", got.expiration, now)
+		}
 	}
 	return got.String(), nil
 }
