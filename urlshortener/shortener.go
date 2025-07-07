@@ -66,7 +66,8 @@ func (c *Usecase) Unshorten(rawURL string) (string, error) {
 	if err != nil {
 		return "", ErrNotFound
 	}
-	if got.expiration != nil && got.expiration.Before(c.clock.Now()) {
+	now := c.clock.Now()
+	if got.expiration != nil && got.expiration.Before(now) {
 		return "", ErrExpired
 	}
 	return got.String(), nil

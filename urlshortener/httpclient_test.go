@@ -1,6 +1,7 @@
 package urlshortener
 
 import (
+	"github.com/goccha/logging/restylog"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -52,8 +53,9 @@ func TestHTTPShortenUnshortener(t *testing.T) {
 func TestHTTPShortenWithExpiration(t *testing.T) {
 	app := NewInMemoryApplication()
 	testServer := httptest.NewServer(app.server.mux)
-	client := NewHTTPClientFromResty(resty.NewWithClient(testServer.Client()).
-		SetBaseURL(testServer.URL))
+	restyClient := resty.NewWithClient(testServer.Client())
+	restyClient.SetLogger(&restylog.Logger{})
+	client := NewHTTPClientFromResty(restyClient.SetBaseURL(testServer.URL))
 	clock := clockwork.NewFakeClock()
 	app.WithClock(clock)
 
@@ -65,6 +67,11 @@ func TestHTTPShortenWithExpiration(t *testing.T) {
 	require.NoError(t, err)
 
 	clock.Advance(2 * time.Hour)
+
 	_, err = client.Unshorten(short)
-	require.ErrorIs(t, err, ErrExpired)
+	assert.ErrorIs(t, err, ErrExpired)
+
+	count, err := app.CountingUsecase.countStore.Get(short)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count)
 }
