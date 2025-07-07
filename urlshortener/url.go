@@ -16,6 +16,14 @@ type URL struct {
 
 var ErrInvalidURL = errors.New("invalid URL")
 
+func MustNewURL(rawURL string, expiration *time.Time) URL {
+	u, err := NewURL(rawURL, expiration)
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: `%s`", err))
+	}
+	return u
+}
+
 func NewURL(rawURL string, expiration *time.Time) (URL, error) {
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -50,4 +58,12 @@ func (u URL) Shorten() (URL, error) {
 	}
 	shortenedPath := fmt.Sprintf("u/%s", u.encode())
 	return URL{URL: &url.URL{Scheme: "https", Host: "localhost:8080", Path: shortenedPath}, expiration: u.expiration}, nil
+}
+
+func (u URL) Expiring() bool {
+	return u.expiration != nil
+}
+
+func (u URL) ExpiredAt(t time.Time) bool {
+	return u.Expiring() && u.expiration.Before(t)
 }

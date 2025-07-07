@@ -168,7 +168,9 @@ func TestShortenWithExpiration(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	app.WithClock(clock)
 
-	expirationTime := clock.Now().Add(1 * time.Hour)
+	location, err := time.LoadLocation("Local")
+	require.NoError(t, err)
+	expirationTime := clock.Now().In(location).Add(1 * time.Hour)
 	short, err := app.Shorten("https://developer.hashicorp.com/vault/tutorials/get-started/understand-static-dynamic-secrets", &expirationTime)
 	require.NoError(t, err)
 

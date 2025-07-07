@@ -54,7 +54,12 @@ func (p PGStore) Get(shortened string) (URL, error) {
 		return URL{}, tx.Error
 	}
 	if association.Expiration.Valid {
-		return NewURL(association.URL, &association.Expiration.Time)
+		location, err := time.LoadLocation("Local")
+		if err != nil {
+			return URL{}, err
+		}
+		utc := association.Expiration.Time.In(location)
+		return NewURL(association.URL, &utc)
 	}
 	return NewURL(association.URL, nil)
 }

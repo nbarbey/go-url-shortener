@@ -2,7 +2,6 @@ package urlshortener
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/jonboulle/clockwork"
@@ -63,20 +62,18 @@ func (c *Usecase) Unshorten(rawURL string) (string, error) {
 	if err := u.Validate(); err != nil {
 		return "", err
 	}
-	got, err := c.store.Get(rawURL)
+	storedURL, err := c.store.Get(rawURL)
 	if err != nil {
 		return "", ErrNotFound
 	}
-	now := c.clock.Now()
-	if got.expiration != nil {
-		if got.expiration.Before(now) {
-			fmt.Printf("expiration is `%s` which is before now `%s`", got.expiration, now)
-			return "", ErrExpired
-		} else {
-			fmt.Printf("expiration is `%s` which is after now `%s`", got.expiration, now)
-		}
+	location, err := time.LoadLocation("Local")
+	if err != nil {
+		return "", err
 	}
-	return got.String(), nil
+	if storedURL.ExpiredAt(c.clock.Now().In(location)) {
+		return "", ErrExpired
+	}
+	return storedURL.String(), nil
 }
 
 type CountingUsecase struct {

@@ -59,7 +59,9 @@ func TestHTTPShortenWithExpiration(t *testing.T) {
 	clock := clockwork.NewFakeClock()
 	app.WithClock(clock)
 
-	expirationTime := time.Now().Add(1 * time.Hour)
+	location, err := time.LoadLocation("Local")
+	require.NoError(t, err)
+	expirationTime := clock.Now().In(location).Add(1 * time.Hour)
 	short, err := client.Shorten("https://developer.hashicorp.com/vault/tutorials/get-started/understand-static-dynamic-secrets", &expirationTime)
 	require.NoError(t, err)
 

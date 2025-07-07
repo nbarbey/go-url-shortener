@@ -65,11 +65,17 @@ func withShortenerHandler(s Shortener, mws ...middleware) muxModifier {
 					writer.WriteHeader(http.StatusBadRequest)
 					return
 				}
-				e, err := time.Parse("2006-01-02_15:04:05", expirationString)
+				location, err := time.LoadLocation("Local")
 				if err != nil {
 					writer.WriteHeader(http.StatusBadRequest)
 					return
 				}
+				e, err := time.ParseInLocation("2006-01-02_15:04:05", expirationString, location)
+				if err != nil {
+					writer.WriteHeader(http.StatusBadRequest)
+					return
+				}
+
 				expiration = &e
 			}
 			shortened, err := s.Shorten(rawURL, expiration)
