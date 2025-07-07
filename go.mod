@@ -1,6 +1,6 @@
 module nbarbey.fr/url-shortener
 
-go 1.23
+go 1.23.8
 
 require (
 	github.com/MadAppGang/httplog v1.3.0
