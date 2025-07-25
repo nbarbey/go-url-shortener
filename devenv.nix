@@ -13,6 +13,9 @@
     pkgs.gcc
   ];
 
+  outputs = {
+    gourlshortener = import ./package.nix { inherit pkgs lib; };
+  };
   # https://devenv.sh/languages/
   languages.go.enable = true;
 
